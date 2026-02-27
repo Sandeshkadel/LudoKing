@@ -53,13 +53,16 @@ jobs:
           key: gradle-${{ runner.os }}-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
           restore-keys: gradle-${{ runner.os }}-
 
-      # ── 8. Download fresh gradle-wrapper.jar + make gradlew executable ─────
-      - name: Set up Gradle wrapper
-        run: |
-          # Download the official gradle-wrapper.jar (avoids any corruption from git CRLF)
-          curl -fsSL -o android/gradle/wrapper/gradle-wrapper.jar \
-            "https://raw.githubusercontent.com/gradle/gradle/v8.6.0/gradle/wrapper/gradle-wrapper.jar"
-          chmod +x android/gradlew
+      # ── 8. Set up Gradle 8.6 directly (no wrapper jar needed) ───────────────
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.6'
+          cache-read-only: false
+
+      # ── 8b. Make gradlew executable (fallback) ────────────────────────────
+      - name: Grant Gradle execute permission
+        run: chmod +x android/gradlew
 
       # ── 9. Bundle JS (Metro) ──────────────────────────────────────────────
       - name: Create assets directory
@@ -77,7 +80,7 @@ jobs:
       # ── 10. Build Release APK ─────────────────────────────────────────────
       - name: Build Release APK
         working-directory: android
-        run: ./gradlew assembleRelease --no-daemon
+        run: gradle assembleRelease --no-daemon
         env:
           ANDROID_HOME: ${{ env.ANDROID_SDK_ROOT }}
 
