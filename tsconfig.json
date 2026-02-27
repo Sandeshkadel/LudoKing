@@ -1,0 +1,26 @@
+{
+  "extends": "@react-native/typescript-config/tsconfig.json",
+  "compilerOptions": {
+    "allowSyntheticDefaultImports": true,
+    "skipLibCheck": true,
+    "baseUrl": "./",
+    "allowJs": false,
+    "types": ["react-native", "react-native-web", "jest"],
+    "jsx": "react-native",
+    "noImplicitAny": true,
+    "moduleResolution": "Bundler",
+    "target": "esnext",
+    "lib": ["ESNext"],
+    "paths": {
+      "$assets/*": ["src/assets/*"],
+      "$redux/*": ["src/redux/*"],
+      "$screens/*": ["src/screens/*"],
+      "$constants/*": ["src/constants/*"],
+      "$helpers/*": ["src/helpers/*"],
+      "$components/*": ["src/components/*"],
+      "$hooks/*": ["src/hooks/*"],
+      "$navigation/*": ["src/navigation/*"],
+    },
+    "typeRoots": ["declaration.d.ts"]
+  }
+}
