@@ -1,0 +1,124 @@
+name: 🎲 Build Ludo King APK
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:        # lets you trigger a build manually from GitHub
+
+jobs:
+  build-android:
+    name: Build Android APK
+    runs-on: ubuntu-latest
+
+    steps:
+      # ── 1. Checkout ──────────────────────────────────────────────────────
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # ── 2. Node.js ────────────────────────────────────────────────────────
+      - name: Set up Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      # ── 3. Install JS dependencies ────────────────────────────────────────
+      - name: Install dependencies
+        run: npm install --legacy-peer-deps
+
+      # ── 4. Java 17 (AGP compatible) ───────────────────────────────────────
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      # ── 5. Android SDK ────────────────────────────────────────────────────
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      # ── 6. Accept SDK licenses ────────────────────────────────────────────
+      - name: Accept Android SDK licenses
+        run: yes | sdkmanager --licenses || true
+
+      # ── 7. Cache Gradle ───────────────────────────────────────────────────
+      - name: Cache Gradle packages
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: gradle-${{ runner.os }}-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: gradle-${{ runner.os }}-
+
+      # ── 8. Make Gradle executable ─────────────────────────────────────────
+      - name: Grant Gradle execute permission
+        run: chmod +x android/gradlew
+
+      # ── 9. Bundle JS (Metro) ──────────────────────────────────────────────
+      - name: Create assets directory
+        run: mkdir -p android/app/src/main/assets
+
+      - name: Bundle React Native JS
+        run: |
+          npx react-native bundle \
+            --platform android \
+            --dev false \
+            --entry-file index.js \
+            --bundle-output android/app/src/main/assets/index.android.bundle \
+            --assets-dest android/app/src/main/res
+
+      # ── 10. Build Release APK ─────────────────────────────────────────────
+      - name: Build Release APK
+        working-directory: android
+        run: ./gradlew assembleRelease --no-daemon
+        env:
+          ANDROID_HOME: ${{ env.ANDROID_SDK_ROOT }}
+
+      # ── 11. Rename APK ────────────────────────────────────────────────────
+      - name: Rename APK
+        run: |
+          mkdir -p releases
+          cp android/app/build/outputs/apk/release/app-release.apk \
+             releases/ludo-king-v1.0.apk
+
+      # ── 12. Upload APK as workflow artifact ───────────────────────────────
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ludo-king-apk
+          path: releases/ludo-king-v1.0.apk
+          retention-days: 30
+
+      # ── 13. Create GitHub Release on push to main ─────────────────────────
+      - name: Create GitHub Release
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v1.0.${{ github.run_number }}
+          name: "🎲 Ludo King v1.0.${{ github.run_number }}"
+          body: |
+            ## 🎲 Ludo King — Android Release
+
+            ### What's included
+            - Full Ludo board game with authentic rules
+            - 2 / 3 / 4 player support with custom player names
+            - Animated dice roll, fireworks, trophy animations
+            - Sound effects: roll, move, capture, safe-spot, win
+            - Secret Demo Mode (Settings → Demo) — pick a color to guarantee their win
+            - Beautiful Ludo King-inspired UI
+
+            ### Install
+            1. Download **ludo-king-v1.0.${{ github.run_number }}.apk** below
+            2. On your Android phone: **Settings → Security → Enable "Install unknown apps"**
+            3. Open the APK and tap Install
+            4. Launch **Ludo King** 🎲
+
+            > Requires Android 6.0 (API 23) or higher
+          files: releases/ludo-king-v1.0.apk
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
