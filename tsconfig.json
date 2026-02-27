@@ -1,7 +1,8 @@
 {
-  "extends": "@react-native/typescript-config/tsconfig.json",
   "compilerOptions": {
     "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
+    "strict": true,
     "skipLibCheck": true,
     "baseUrl": "./",
     "allowJs": false,
@@ -9,7 +10,7 @@
     "jsx": "react-native",
     "noImplicitAny": true,
     "moduleResolution": "Bundler",
-    "target": "esnext",
+    "target": "ESNext",
     "lib": ["ESNext"],
     "paths": {
       "$assets/*": ["src/assets/*"],
@@ -19,7 +20,7 @@
       "$helpers/*": ["src/helpers/*"],
       "$components/*": ["src/components/*"],
       "$hooks/*": ["src/hooks/*"],
-      "$navigation/*": ["src/navigation/*"],
+      "$navigation/*": ["src/navigation/*"]
     },
     "typeRoots": ["declaration.d.ts"]
   }
