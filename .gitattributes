@@ -1,0 +1,28 @@
+# Auto detect text files and perform LF normalization
+* text=auto
+
+# Force LF for shell scripts (required on Linux CI)
+*.sh text eol=lf
+gradlew text eol=lf
+
+# Treat binary files as binary (no CRLF conversion)
+*.jar binary
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.svg binary
+*.ttf binary
+*.otf binary
+*.woff binary
+*.woff2 binary
+*.mp3 binary
+*.wav binary
+*.ogg binary
+*.m4a binary
+*.aac binary
+*.apk binary
+*.aab binary
+*.keystore binary
+*.jks binary
