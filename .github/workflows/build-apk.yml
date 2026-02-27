@@ -53,9 +53,13 @@ jobs:
           key: gradle-${{ runner.os }}-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
           restore-keys: gradle-${{ runner.os }}-
 
-      # ── 8. Make Gradle executable ─────────────────────────────────────────
-      - name: Grant Gradle execute permission
-        run: chmod +x android/gradlew
+      # ── 8. Download fresh gradle-wrapper.jar + make gradlew executable ─────
+      - name: Set up Gradle wrapper
+        run: |
+          # Download the official gradle-wrapper.jar (avoids any corruption from git CRLF)
+          curl -fsSL -o android/gradle/wrapper/gradle-wrapper.jar \
+            "https://raw.githubusercontent.com/gradle/gradle/v8.6.0/gradle/wrapper/gradle-wrapper.jar"
+          chmod +x android/gradlew
 
       # ── 9. Bundle JS (Metro) ──────────────────────────────────────────────
       - name: Create assets directory
