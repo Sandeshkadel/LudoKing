@@ -86,7 +86,7 @@ const SettingsModal: React.FC<Props> = ({ visible, onClose }) => {
             </LinearGradient>
           </TouchableOpacity>
 
-          {/* Demo / Rigged Mode */}
+          {/* Assisted showcase mode: intentionally not fair play */}
           <TouchableOpacity onPress={enableDemo} activeOpacity={0.8} style={styles.modeCard}>
             <LinearGradient
               colors={cheat.enabled ? ['#c8860a', '#e8a520', '#f5c842'] : ['#0d1520', '#162030']}
@@ -99,10 +99,10 @@ const SettingsModal: React.FC<Props> = ({ visible, onClose }) => {
               )}
               <Text style={styles.modeIcon}>🏆</Text>
               <Text style={[styles.modeName, cheat.enabled && styles.modeNameActive]}>
-                Demo
+                Assist
               </Text>
               <Text style={[styles.modeSub, cheat.enabled && styles.modeSubActive]}>
-                Pick winner
+                Favored color
               </Text>
             </LinearGradient>
           </TouchableOpacity>
@@ -149,9 +149,11 @@ const SettingsModal: React.FC<Props> = ({ visible, onClose }) => {
               })}
             </View>
 
-            {/* Secret hint */}
+            {/* Be transparent about the mode's effect */}
             <View style={styles.hintBox}>
-              <Text style={styles.hintText}>🤫  Only you can see this setting</Text>
+              <Text style={styles.hintText}>
+                ⚠️ Practice assist is unbalanced: the selected color gets weighted dice and automatic best-move selection. Other colors keep fair dice and manual moves. Use only for a solo showcase, not competitive play.
+              </Text>
             </View>
           </>
         )}
