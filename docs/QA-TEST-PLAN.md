@@ -5,9 +5,10 @@ This document defines the quality gates for the Android/iOS Ludo app. A feature 
 ## Current verified status
 
 - The dice/turn/movement rule helpers are separated into `src/helpers/ludoRules.ts` and covered by Jest tests.
-- `src/helpers/__tests__/ludoRules.test.ts` covers all six fair-dice outcomes, weighted-dice boundaries, turn rotation for 2/3/4 players, pocket exit, legal moves, exact home arrival, overshoot prevention, and invalid inputs.
+- Reducer tests cover piece-position synchronization, invalid piece IDs, turn/selection reset, winner state, and restart configuration preservation.
+- `src/helpers/__tests__/ludoRules.test.ts` covers all six fair-dice outcomes, weighted-dice boundaries, turn rotation for 2/3/4 players, pocket exit, legal moves, exact home arrival, overshoot prevention, and invalid inputs. `src/redux/reducers/__tests__/gameSlice.test.ts` covers key reducer state invariants.
 - The Android workflow runs Jest before attempting the release APK build.
-- **Not yet verified:** the complete Jest suite in CI, a successful Android release build, installation on a physical device/emulator, end-to-end full games, or a published APK.
+- **Not yet verified:** the complete Jest suite has not been confirmed passing because the GitHub Actions account-level billing lock prevents jobs from starting; a successful Android release build, installation on a physical device/emulator, end-to-end full games, or a published APK are also still outstanding.
 - **AI opponent status:** the existing Assist mode is a disclosed favored-color practice mode. It is not a general AI opponent that independently plays every seat, and no claim of perfect play should be made until a separately specified AI opponent and its integration tests exist.
 
 ## Commands
