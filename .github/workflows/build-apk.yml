@@ -117,7 +117,7 @@ jobs:
             - 2 / 3 / 4 player support with custom player names
             - Animated dice roll, fireworks, trophy animations
             - Sound effects: roll, move, capture, safe-spot, win
-            - Secret Demo Mode (Settings → Demo) — pick a color to guarantee their win
+            - Optional Assist mode (Settings → Assist): the favored color gets weighted dice and automatic best-move selection; other colors keep fair dice and manual moves. This is an unbalanced practice/showcase feature, not competitive play.
             - Beautiful Ludo King-inspired UI
 
             ### Install
