@@ -24,10 +24,10 @@
 
 ### Android APK (Direct Install)
 
-> **When a verified release APK is published, you can install it directly on your Android phone.**
+> **Release status:** No verified APK is currently attached to this branch. Use the Actions workflow to build and verify an APK before publishing a release.
 
 1. Go to the [**Releases**](https://github.com/Sandeshkadel/LudoKing/releases) section of this repository
-2. Download the APK attached to a published release (a build has not yet been verified, so an APK may not be available yet)
+2. Download the APK attached to a published release only after a successful build has been verified
 3. On your Android phone, go to **Settings → Security → Enable "Install from unknown sources"**
 4. Open the downloaded APK and tap **Install**
 5. Launch **Ludo King** 🎲
@@ -211,6 +211,8 @@ npx react-native run-ios
 ---
 
 ## 🔨 Building a Release APK
+
+A release should be published only after the Android build and gameplay tests pass. The GitHub Actions workflow produces an APK artifact when its runner starts and completes successfully. If Actions reports an account/billing lock, the job has not run and no APK artifact has been produced.
 
 ```bash
 cd android
