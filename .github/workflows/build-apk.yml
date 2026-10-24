@@ -2,9 +2,9 @@ name: 🎲 Build Ludo King APK
 
 on:
   push:
-    branches: [main]
+    branches: [main, gameplay-fixes]
   pull_request:
-    branches: [main]
+    branches: [main, gameplay-fixes]
   workflow_dispatch:        # lets you trigger a build manually from GitHub
 
 permissions:
@@ -25,7 +25,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-          cache: 'npm'
 
       # ── 3. Install JS dependencies ────────────────────────────────────────
       - name: Install dependencies
