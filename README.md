@@ -10,7 +10,7 @@
 
 ### *The Classic Board Game — Reimagined for Mobile*
 
-> A full-featured, polished Ludo game built with React Native and TypeScript, packed with smooth animations, sound effects, a secret Demo Mode, and a stunning Ludo King-inspired UI.
+> A full-featured, polished Ludo game built with React Native and TypeScript, packed with smooth animations, sound effects, an explicitly disclosed optional Assist mode, and a Ludo King-inspired UI.
 
 <br/>
 
@@ -24,10 +24,10 @@
 
 ### Android APK (Direct Install)
 
-> **Download the latest release APK and install directly on your Android phone.**
+> **When a verified release APK is published, you can install it directly on your Android phone.**
 
 1. Go to the [**Releases**](https://github.com/Sandeshkadel/LudoKing/releases) section of this repository
-2. Download `ludo-king-v1.0.apk`
+2. Download the APK attached to a published release (a build has not yet been verified, so an APK may not be available yet)
 3. On your Android phone, go to **Settings → Security → Enable "Install from unknown sources"**
 4. Open the downloaded APK and tap **Install**
 5. Launch **Ludo King** 🎲
@@ -82,14 +82,12 @@
 </td>
 <td width="50%">
 
-### 🤫 Secret Demo Mode
-- ✅ Hidden in Settings (in-game pause menu)
-- ✅ Pick any colour to secretly guarantee their win
-- ✅ Weighted dice — selected colour gets lucky rolls, opponents get unlucky rolls
-- ✅ Looks 100% natural — no obvious AI tells
-- ✅ Auto-move engine picks the best piece every turn
-- ✅ Opponents auto-move their worst piece
-- ✅ Setting persists across Restart Game
+### 🧩 Assist / Practice Mode
+- ✅ Optional mode disclosed in Settings
+- ✅ Select a favored color for weighted dice
+- ✅ Favored color automatically selects its best legal move
+- ✅ Other colors keep fair dice and manual move selection
+- ⚠️ Unbalanced practice/showcase feature; not intended for competitive play
 
 </td>
 </tr>
@@ -111,13 +109,14 @@
 9.  First player to bring all 4 pieces home wins 🏆
 ```
 
-### 🤫 Activating Demo Mode (Secret)
+### 🧩 Using Assist Mode
 
 ```
 During a game → tap MENU (⏸) → tap ⚙️ Settings
-→ Switch to "Demo" mode → pick a colour
-→ tap DONE — that colour now wins every time!
+→ Enable Assist → choose the favored color → tap DONE
 ```
+
+Assist mode is intentionally unbalanced: the favored color receives weighted dice and automatic best-move selection. Other colors retain fair dice and manual moves. Use it for solo practice or a showcase, not competitive play.
 
 ---
 
@@ -243,22 +242,9 @@ Each piece tracks two values:
 
 ---
 
-## 🤫 Demo Mode — How It Works
+## 🧩 Assist Mode — How It Works
 
-The Demo mode is designed to look **completely natural** to any observer:
-
-| What you see | What's really happening |
-|---|---|
-| Favoured player rolls high numbers | Weighted RNG: 28% chance of 6, vs fair 16.7% |
-| Opponents roll low numbers | Weighted RNG: 32% chance of 1, 5% chance of 6 |
-| Favoured player picks pieces quickly | Random 700–1,500ms delay simulates human thinking |
-| Opponents seem to make bad choices | Auto-picks least-progressed piece after 500–1,400ms |
-| Game feels natural and competitive | Opponents can still roll 4–6 occasionally |
-
-**Priority engine for the favoured player:**
-1. Move a piece that reaches home exactly this turn
-2. Move the furthest piece on the board
-3. Bring a pocket piece out (on a 6)
+Assist mode is an explicitly disclosed, unbalanced practice feature. The favored color receives weighted dice and automatic best-legal-move selection; all other colors retain fair dice and manual move selection. It does not guarantee a win. Use it only for solo practice or a showcase, not competitive play.
 
 ---
 
