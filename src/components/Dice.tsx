@@ -60,7 +60,7 @@ const Dice: React.FC<DiceProps> = ({ color, rotate, player, data }) => {
     const delay = (duration: number) => new Promise(resolve => setTimeout(resolve, duration));
 
     // ── Piece selector for Assist mode ─────────────────────────────────────────
-    // Favoured player: pick the piece closest to home (100% win path).
+    // Favored player: pick the piece closest to home (100% win path).
     const getBestPieceForAssistMode = (diceNum: number, pieces: PLAYER_PIECE[]): { id: string; pos: number } | null => {
         // Priority 1 — piece that reaches home EXACTLY this turn
         const homeRun = pieces.find(
@@ -84,9 +84,8 @@ const Dice: React.FC<DiceProps> = ({ color, rotate, player, data }) => {
     };
 
     // ── Assist-mode dice weighting ────────────────────────────────────────────────────
-    // Uses weighted random — looks statistically lucky/unlucky, not obviously fixed.
-    // Favoured: biased toward 4–6 (looks like a hot streak, not a cheat).
-    // Opponents: biased toward 1–3 (looks like bad luck, not a cheat).
+    // Only the selected Assist-mode color uses weighted dice; all other colors
+    // continue to use a uniform random roll.
     const computeAssistDice = (): number => {
         /** Pick 1-indexed face from weighted array [w1, w2, w3, w4, w5, w6] */
         const weightedRoll = (weights: number[]): number => {
