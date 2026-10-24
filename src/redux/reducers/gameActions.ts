@@ -1,5 +1,6 @@
 import { safeSpots, starSpots, startingPoints, turningPoints, victoryStart } from "$helpers/PlotData";
 import { playSound } from "$helpers/SoundUtils";
+import { canPieceMove } from "$helpers/ludoRules";
 import { ApplicationDispatch, RootState } from "$redux/store"
 import { selectCurrentPosition, selectDiceNo } from "./gameSelectors";
 import { announceWinner, disableTouch, unfreezeDice, updateFireworks, updatePlayerChance, updatePlayerPieceValue } from "./gameSlice";
@@ -54,8 +55,8 @@ export const handleForwardThunk = (playerNo: number, id: string, pos: number) =>
             return;
         }
 
-        // Overshoot guard for board pieces
-        if ((piece.travelCount + diceNo) > 57) {
+        // Use the same tested legality rule as dice move selection.
+        if (!canPieceMove(piece, diceNo)) {
             dispatch(unfreezeDice());
             return;
         }
