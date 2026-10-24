@@ -59,9 +59,9 @@ const Dice: React.FC<DiceProps> = ({ color, rotate, player, data }) => {
 
     const delay = (duration: number) => new Promise(resolve => setTimeout(resolve, duration));
 
-    // ── Piece selector for Demo mode ─────────────────────────────────────────
+    // ── Piece selector for Assist mode ─────────────────────────────────────────
     // Favoured player: pick the piece closest to home (100% win path).
-    const getBestPieceForDemoMode = (diceNum: number, pieces: PLAYER_PIECE[]): { id: string; pos: number } | null => {
+    const getBestPieceForAssistMode = (diceNum: number, pieces: PLAYER_PIECE[]): { id: string; pos: number } | null => {
         // Priority 1 — piece that reaches home EXACTLY this turn
         const homeRun = pieces.find(
             p => p.pos !== 0 && p.travelCount < 57 && p.travelCount + diceNum === 57
@@ -83,11 +83,11 @@ const Dice: React.FC<DiceProps> = ({ color, rotate, player, data }) => {
         return null;
     };
 
-    // ── Cheat dice engine ────────────────────────────────────────────────────
+    // ── Assist-mode dice weighting ────────────────────────────────────────────────────
     // Uses weighted random — looks statistically lucky/unlucky, not obviously fixed.
     // Favoured: biased toward 4–6 (looks like a hot streak, not a cheat).
     // Opponents: biased toward 1–3 (looks like bad luck, not a cheat).
-    const computeCheatDice = (isFavored: boolean, _pieces: PLAYER_PIECE[]): number => {
+    const computeAssistDice = (): number => {
         /** Pick 1-indexed face from weighted array [w1, w2, w3, w4, w5, w6] */
         const weightedRoll = (weights: number[]): number => {
             const total = weights.reduce((a, b) => a + b, 0);
@@ -99,15 +99,9 @@ const Dice: React.FC<DiceProps> = ({ color, rotate, player, data }) => {
             return weights.length;
         };
 
-        if (isFavored) {
-            // 1→8%  2→10%  3→14%  4→18%  5→22%  6→28%
-            // Looks like a lucky player — not impossibly always-6
-            return weightedRoll([8, 10, 14, 18, 22, 28]);
-        } else {
-            // 1→32%  2→26%  3→17%  4→12%  5→8%  6→5%
-            // Looks unlucky — still occasionally gets good rolls so it feels real
-            return weightedRoll([32, 26, 17, 12, 8, 5]);
-        }
+        // Favored color: 1→8%, 2→10%, 3→14%, 4→18%, 5→22%, 6→28%.
+        // Other colors use a uniform 1–6 roll and do not use this helper.
+        return weightedRoll([8, 10, 14, 18, 22, 28]);
     };
 
     const getNextPlayer = (currentPlayer: number) => {
@@ -127,7 +121,7 @@ const Dice: React.FC<DiceProps> = ({ color, rotate, player, data }) => {
         } else if (cheatMode.enabled && cheatMode.favoredPlayer !== 0 && isFavoredPlayer) {
             // The selected color receives a disclosed practice-mode advantage.
             // Other players keep fair, uniform dice rolls.
-            diceNumber = computeCheatDice(true, data);
+            diceNumber = computeAssistDice();
         } else {
             diceNumber = Math.floor(Math.random() * 6) + 1;
         }
@@ -143,13 +137,13 @@ const Dice: React.FC<DiceProps> = ({ color, rotate, player, data }) => {
         ));
         const hasPieceInPocket = data.some((piece) => piece.pos === 0);
 
-        // ── Demo mode: auto-select & move the best piece for favoured player ──
-        // Random "thinking" delay makes it look like a human is picking a piece.
+        // ── Assist mode: auto-select & move the best piece for the favored color ──
+        // Brief delay keeps the move animation readable.
         if (isFavoredPlayer) {
-            const bestPiece = getBestPieceForDemoMode(diceNumber, data);
+            const bestPiece = getBestPieceForAssistMode(diceNumber, data);
             if (bestPiece) {
                 dispatch(disableTouch());
-                // Simulate natural human reaction time (700–1 500 ms)
+                // Allow the dice animation to settle before moving.
                 const thinkTime = 700 + Math.floor(Math.random() * 800);
                 await delay(thinkTime);
                 dispatch(handleForwardThunk(player, bestPiece.id, bestPiece.pos) as any);
