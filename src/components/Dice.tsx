@@ -10,6 +10,7 @@ import { selectCurrentPlayerChance, selectDiceNo, selectDiceRolled, selectPlayer
 import { disableTouch, enableCellSelection, enablePileSelection, updateDiceNumber, updatePlayerChance } from '$redux/reducers/gameSlice';
 import { handleForwardThunk } from '$redux/reducers/gameActions';
 import { playSound } from '$helpers/SoundUtils';
+import { getNextPlayer as getNextPlayerForCount, rollFairDice, rollWeightedDice } from '$helpers/ludoRules';
 
 interface DiceProps {
     color: string;
@@ -87,26 +88,10 @@ const Dice: React.FC<DiceProps> = ({ color, rotate, player, data }) => {
     // Only the selected Assist-mode color uses weighted dice; all other colors
     // continue to use a uniform random roll.
     const computeAssistDice = (): number => {
-        /** Pick 1-indexed face from weighted array [w1, w2, w3, w4, w5, w6] */
-        const weightedRoll = (weights: number[]): number => {
-            const total = weights.reduce((a, b) => a + b, 0);
-            let rng = Math.floor(Math.random() * total);
-            for (let i = 0; i < weights.length; i++) {
-                rng -= weights[i];
-                if (rng < 0) return i + 1;
-            }
-            return weights.length;
-        };
-
-        // Favored color: 1→8%, 2→10%, 3→14%, 4→18%, 5→22%, 6→28%.
-        // Other colors use a uniform 1–6 roll and do not use this helper.
-        return weightedRoll([8, 10, 14, 18, 22, 28]);
+        // Explicitly disclosed practice weighting: 8%, 10%, 14%, 18%, 22%, 28%.
+        return rollWeightedDice([8, 10, 14, 18, 22, 28]);
     };
 
-    const getNextPlayer = (currentPlayer: number) => {
-        const nextPlayer = currentPlayer + 1;
-        return nextPlayer > playerCount ? 1 : nextPlayer;
-    }
 
     const handleDicePress = async (predice: number) => {
 
@@ -122,7 +107,7 @@ const Dice: React.FC<DiceProps> = ({ color, rotate, player, data }) => {
             // Other players keep fair, uniform dice rolls.
             diceNumber = computeAssistDice();
         } else {
-            diceNumber = Math.floor(Math.random() * 6) + 1;
+            diceNumber = rollFairDice();
         }
 
         playSound('dice_roll');
@@ -150,7 +135,7 @@ const Dice: React.FC<DiceProps> = ({ color, rotate, player, data }) => {
             }
             // A six with no legal move still grants another roll.
             await delay(700);
-            dispatch(updatePlayerChance({ chancePlayer: diceNumber === 6 ? player : getNextPlayer(player) }));
+            dispatch(updatePlayerChance({ chancePlayer: diceNumber === 6 ? player : getNextPlayerForCount(player, playerCount) }));
             return;
         }
 
