@@ -9,37 +9,29 @@ import {
 } from '../src/redux/reducers/gameSlice';
 
 describe('game selection lifecycle', () => {
-  it('clears both piece-selection states when the dice is unfrozen', () => {
-    const selected = gameReducer(
+  const selectedState = () =>
+    gameReducer(
       gameReducer(initialState, enablePileSelection({ playerNo: 1 })),
       enableCellSelection({ playerNo: 1 }),
     );
-    const result = gameReducer(selected, unfreezeDice());
+
+  it('clears both piece-selection states when the dice is unfrozen', () => {
+    const result = gameReducer(selectedState(), unfreezeDice());
     expect(result.pileSelectionPlayer).toBe(-1);
     expect(result.cellSelectionPlayer).toBe(-1);
     expect(result.touchDiceBlock).toBe(false);
   });
 
   it('clears both piece-selection states when the turn changes', () => {
-    const selected = gameReducer(
-      gameReducer(initialState, enablePileSelection({ playerNo: 1 })),
-      enableCellSelection({ playerNo: 1 }),
-    );
-    const result = gameReducer(selected, updatePlayerChance({ chancePlayer: 2 }));
+    const result = gameReducer(selectedState(), updatePlayerChance({ chancePlayer: 2 }));
     expect(result.pileSelectionPlayer).toBe(-1);
     expect(result.cellSelectionPlayer).toBe(-1);
     expect(result.chancePlayer).toBe(2);
   });
-});
-
 
   it('clears both piece-selection states after a piece update', () => {
-    const selected = gameReducer(
-      gameReducer(initialState, enablePileSelection({ playerNo: 1 })),
-      enableCellSelection({ playerNo: 1 }),
-    );
     const result = gameReducer(
-      selected,
+      selectedState(),
       updatePlayerPieceValue({
         playerNo: 'player1',
         pieceId: 'A1',
@@ -51,3 +43,4 @@ describe('game selection lifecycle', () => {
     expect(result.cellSelectionPlayer).toBe(-1);
     expect(result.player1[0]).toMatchObject({ id: 'A1', pos: 1, travelCount: 1 });
   });
+});
