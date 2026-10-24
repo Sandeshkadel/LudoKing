@@ -1,4 +1,4 @@
-import { Animated, Easing, Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
+import { Animated, Easing, Image, StyleSheet, TouchableOpacity, View } from 'react-native'
 import React, { memo, useEffect, useRef, useState } from 'react'
 import { LinearGradient } from 'react-native-linear-gradient';
 import { BackgroundImage } from '$helpers/GetIcon';
@@ -27,8 +27,6 @@ const Dice: React.FC<DiceProps> = ({ color, rotate, player, data }) => {
     const diceNo = useAppSelector(selectDiceNo);
     const playerCount = useAppSelector(selectPlayerCount);
     const cheatMode = useAppSelector(selectCheatMode);
-    const playerPieces: PLAYER_PIECE[] = useAppSelector((state: any) => state.game[`player${currentPlayerChance}`])
-
     const pileIcon = BackgroundImage.getImage(color);
     const diceIcon = BackgroundImage.getImage(diceNo);
 
@@ -85,24 +83,6 @@ const Dice: React.FC<DiceProps> = ({ color, rotate, player, data }) => {
         return null;
     };
 
-    // Opponent: auto-select their WORST piece so they never make a useful move.
-    // Picks the least-advanced piece, keeping the favoured player always ahead.
-    // When dice=6 and only pocket pieces remain, bring one out — looks natural.
-    const getWorstPieceForOpponent = (diceNum: number, pieces: PLAYER_PIECE[]): { id: string; pos: number } | null => {
-        // First prefer advancing an on-board piece (least progressed = worst move)
-        const movable = pieces
-            .filter(p => p.pos !== 0 && p.travelCount < 57 && p.travelCount + diceNum <= 57)
-            .sort((a, b) => a.travelCount - b.travelCount);
-        if (movable.length > 0) return { id: movable[0].id, pos: movable[0].pos };
-
-        // dice=6 with all pieces pocketed → bring one out (skipping would look broken)
-        if (diceNum === 6) {
-            const pocketed = pieces.find(p => p.pos === 0);
-            if (pocketed) return { id: pocketed.id, pos: 0 };
-        }
-        return null;
-    };
-
     // ── Cheat dice engine ────────────────────────────────────────────────────
     // Uses weighted random — looks statistically lucky/unlucky, not obviously fixed.
     // Favoured: biased toward 4–6 (looks like a hot streak, not a cheat).
@@ -144,9 +124,10 @@ const Dice: React.FC<DiceProps> = ({ color, rotate, player, data }) => {
         let diceNumber: number;
         if (predice) {
             diceNumber = predice;
-        } else if (cheatMode.enabled && cheatMode.favoredPlayer !== 0) {
-            // use data prop (this player's live pieces, same as playerPieces at turn time)
-            diceNumber = computeCheatDice(isFavoredPlayer, data);
+        } else if (cheatMode.enabled && cheatMode.favoredPlayer !== 0 && isFavoredPlayer) {
+            // The selected color receives a disclosed practice-mode advantage.
+            // Other players keep fair, uniform dice rolls.
+            diceNumber = computeCheatDice(true, data);
         } else {
             diceNumber = Math.floor(Math.random() * 6) + 1;
         }
@@ -174,30 +155,12 @@ const Dice: React.FC<DiceProps> = ({ color, rotate, player, data }) => {
                 dispatch(handleForwardThunk(player, bestPiece.id, bestPiece.pos) as any);
                 return;
             }
-            // All pieces already home — pass turn
+            // A six with no legal move still grants another roll.
             await delay(700);
-            dispatch(updatePlayerChance({ chancePlayer: getNextPlayer(player) }));
+            dispatch(updatePlayerChance({ chancePlayer: diceNumber === 6 ? player : getNextPlayer(player) }));
             return;
         }
 
-        // ── Demo mode: auto-select & move the WORST piece for every opponent ──
-        // Prevents opponents from manually picking a good move.
-        // Variable delay keeps it looking human.
-        if (cheatMode.enabled && cheatMode.favoredPlayer !== 0) {
-            const worstPiece = getWorstPieceForOpponent(diceNumber, data);
-            if (worstPiece) {
-                dispatch(disableTouch());
-                // Simulate opponent thinking (500–1 400 ms)
-                const thinkTime = 500 + Math.floor(Math.random() * 900);
-                await delay(thinkTime);
-                dispatch(handleForwardThunk(player, worstPiece.id, worstPiece.pos) as any);
-                return;
-            }
-            // No valid move (all pocketed, dice ≠ 6) — skip turn naturally
-            await delay(800);
-            dispatch(updatePlayerChance({ chancePlayer: getNextPlayer(player) }));
-            return;
-        }
         if (diceNumber === 6) {
             if (hasPieceInPocket) {
                 dispatch(enablePileSelection({ playerNo: player }));
@@ -212,8 +175,9 @@ const Dice: React.FC<DiceProps> = ({ color, rotate, player, data }) => {
                 return;
             }
 
+            // A six grants another roll even when no piece can legally move.
             await delay(600);
-            dispatch(updatePlayerChance({ chancePlayer: getNextPlayer(player) }));
+            dispatch(updatePlayerChance({ chancePlayer: player }));
             return;
         }
 
