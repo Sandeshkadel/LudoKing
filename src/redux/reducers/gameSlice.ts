@@ -32,6 +32,8 @@ const gameSlice = createSlice({
         unfreezeDice: (state) => {
             state.touchDiceBlock = false;
             state.isDiceRolled = false;
+            state.pileSelectionPlayer = -1;
+            state.cellSelectionPlayer = -1;
         },
         updateFireworks: (state, action) => {
             state.fireworks = action.payload;
@@ -43,6 +45,8 @@ const gameSlice = createSlice({
             state.chancePlayer = action.payload.chancePlayer;
             state.touchDiceBlock = false;
             state.isDiceRolled = false;
+            state.pileSelectionPlayer = -1;
+            state.cellSelectionPlayer = -1;
         },
         setPlayerNames: (state, action) => {
             state.playerNames = action.payload;
@@ -58,6 +62,7 @@ const gameSlice = createSlice({
             const playerPieces : any[] = state[playerNo];
             const piece = playerPieces.find((p) => p.id === pieceId)
             state.pileSelectionPlayer = -1;
+            state.cellSelectionPlayer = -1;
 
             if(piece){
                 piece.pos = pos;
