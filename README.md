@@ -14,7 +14,7 @@
 
 <br/>
 
-[📥 Download APK](#-download--installation) · [✨ Features](#-features) · [🚀 Getting Started](#-getting-started) · [🧩 Tech Stack](#-tech-stack) · [📸 Screenshots](#-screenshots)
+[📥 Download APK](#-download--installation) · [✨ Features](#-features) · [🚀 Getting Started](#-getting-started) · [🧪 QA & Test Plan](docs/QA-TEST-PLAN.md) · [🧩 Tech Stack](#-tech-stack) · [📸 Screenshots](#-screenshots)
 
 </div>
 
@@ -247,6 +247,14 @@ Each piece tracks two values:
 ## 🧩 Assist Mode — How It Works
 
 Assist mode is an explicitly disclosed, unbalanced practice feature. The favored color receives weighted dice and automatic best-legal-move selection; all other colors retain fair dice and manual move selection. It does not guarantee a win. Use it only for solo practice or a showcase, not competitive play.
+
+---
+
+## 🧪 QA, Tests & Release Readiness
+
+See the [full QA and test plan](docs/QA-TEST-PLAN.md) for automated dice tests, turn-order and movement scenarios, capture/home rules, full-game simulation requirements, device smoke tests, accessibility checks, and release acceptance criteria. Run the current Jest suite with `npm test -- --runInBand`.
+
+The existing Assist mode is a disclosed favored-color practice feature, not a general-purpose AI opponent. Full AI opponents and complete end-to-end game simulation remain separate work items and must pass the documented acceptance criteria before being advertised as complete.
 
 ---
 
