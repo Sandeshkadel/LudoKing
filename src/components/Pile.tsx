@@ -4,7 +4,7 @@ import { BackgroundImage } from '$helpers/GetIcon';
 import { COLORS } from '$constants/colors';
 import { Svg, Circle } from 'react-native-svg';
 import { useAppSelector } from '$hooks/useAppStore';
-import { selectCellSelection, selectDiceNo, selectPocketPileSelection } from '$redux/reducers/gameSelectors';
+import { selectCellSelection, selectCurrentPlayerChance, selectDiceNo, selectPocketPileSelection } from '$redux/reducers/gameSelectors';
 import { RootState } from '$redux/store';
 
 interface PileProp {
@@ -21,11 +21,18 @@ const Pile: React.FC<PileProp> = ({ color, player, cell, pieceId, onPress }) => 
     const rotation = useRef(new Animated.Value(0)).current;
     const currentPlayerPileSelection = useAppSelector(selectPocketPileSelection);
     const currentPlayerCellSelection = useAppSelector(selectCellSelection);
+    const currentPlayerChance = useAppSelector(selectCurrentPlayerChance);
     const diceNo = useAppSelector(selectDiceNo);
     const playerPieces = useAppSelector((state: RootState) => state.game[`player${player}`]);
 
-    const isPileEnabled = useMemo(() => player === currentPlayerPileSelection, [currentPlayerPileSelection, player]);
-    const isCellEnabled = useMemo(() => player === currentPlayerCellSelection, [currentPlayerCellSelection, player]);
+    const isPileEnabled = useMemo(
+        () => player === currentPlayerPileSelection && player === currentPlayerChance && diceNo === 6,
+        [currentPlayerPileSelection, currentPlayerChance, player, diceNo]
+    );
+    const isCellEnabled = useMemo(
+        () => player === currentPlayerCellSelection && player === currentPlayerChance,
+        [currentPlayerCellSelection, currentPlayerChance, player]
+    );
 
     const isForwardable = useCallback(() => {
         const piece = playerPieces?.find((item: PLAYER_PIECE) => item.id === pieceId);
