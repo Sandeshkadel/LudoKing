@@ -3,8 +3,7 @@ import React, { memo, useCallback } from 'react'
 import { COLORS } from '$constants/colors';
 import Pile from './Pile';
 import { useAppDispatch } from '$hooks/useAppStore';
-import { unfreezeDice, updatePlayerPieceValue } from '$redux/reducers/gameSlice';
-import { startingPoints } from '$helpers/PlotData';
+import { handleForwardThunk } from '$redux/reducers/gameActions';
 
 interface PocketProps {
     color: string;
@@ -25,32 +24,9 @@ const Pocket: React.FC<PocketProps> = ({ color, player, data }) => {
     const dispatch = useAppDispatch();
 
     const handlePress = useCallback((value: PLAYER_PIECE) => {
-        let playerNo: any = value.id.at(0);
-        switch (playerNo) {
-            case 'A':
-                playerNo = 'player1';
-                break;
-            case 'B':
-                playerNo = 'player2';
-                break;
-            case 'C':
-                playerNo = 'player3';
-                break;
-            case 'D':
-                playerNo = 'player4';
-                break;
-        }
-
-
-        dispatch(updatePlayerPieceValue({
-            playerNo,
-            pieceId: value.id,
-            pos: startingPoints[parseInt(playerNo.match(/\d+/)[0], 10) - 1],
-            travelCount: 1
-        }))
-
-        dispatch(unfreezeDice());
-    }, []);
+        // Use the same validation and turn-handling path as every other move.
+        dispatch(handleForwardThunk(player, value.id, value.pos) as any);
+    }, [dispatch, player]);
 
     return (
         <View style={[styles.container, { backgroundColor: color }]}>
