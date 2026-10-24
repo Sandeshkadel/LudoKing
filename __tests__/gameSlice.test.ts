@@ -5,6 +5,7 @@ import {
   gameReducer,
   unfreezeDice,
   updatePlayerChance,
+  updatePlayerPieceValue,
 } from '../src/redux/reducers/gameSlice';
 
 describe('game selection lifecycle', () => {
@@ -30,3 +31,23 @@ describe('game selection lifecycle', () => {
     expect(result.chancePlayer).toBe(2);
   });
 });
+
+
+  it('clears both piece-selection states after a piece update', () => {
+    const selected = gameReducer(
+      gameReducer(initialState, enablePileSelection({ playerNo: 1 })),
+      enableCellSelection({ playerNo: 1 }),
+    );
+    const result = gameReducer(
+      selected,
+      updatePlayerPieceValue({
+        playerNo: 'player1',
+        pieceId: 'A1',
+        pos: 1,
+        travelCount: 1,
+      }),
+    );
+    expect(result.pileSelectionPlayer).toBe(-1);
+    expect(result.cellSelectionPlayer).toBe(-1);
+    expect(result.player1[0]).toMatchObject({ id: 'A1', pos: 1, travelCount: 1 });
+  });
