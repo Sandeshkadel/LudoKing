@@ -165,7 +165,7 @@ const Dice: React.FC<DiceProps> = ({ color, rotate, player, data }) => {
         }
 
         await delay(600);
-        dispatch(updatePlayerChance({ chancePlayer: getNextPlayer(player) }));
+        dispatch(updatePlayerChance({ chancePlayer: getNextPlayerForCount(player, playerCount) }));
     }
 
 
