@@ -10,7 +10,7 @@ import { selectCurrentPlayerChance, selectDiceNo, selectDiceRolled, selectPlayer
 import { disableTouch, enableCellSelection, enablePileSelection, updateDiceNumber, updatePlayerChance } from '$redux/reducers/gameSlice';
 import { handleForwardThunk } from '$redux/reducers/gameActions';
 import { playSound } from '$helpers/SoundUtils';
-import { getNextPlayer as getNextPlayerForCount, rollFairDice, rollWeightedDice } from '$helpers/ludoRules';
+import { canPieceMove, getNextPlayer as getNextPlayerForCount, reachesHomeExactly, rollFairDice, rollWeightedDice } from '$helpers/ludoRules';
 
 interface DiceProps {
     color: string;
@@ -65,13 +65,13 @@ const Dice: React.FC<DiceProps> = ({ color, rotate, player, data }) => {
     const getBestPieceForAssistMode = (diceNum: number, pieces: PLAYER_PIECE[]): { id: string; pos: number } | null => {
         // Priority 1 — piece that reaches home EXACTLY this turn
         const homeRun = pieces.find(
-            p => p.pos !== 0 && p.travelCount < 57 && p.travelCount + diceNum === 57
+            p => reachesHomeExactly(p, diceNum)
         );
         if (homeRun) return { id: homeRun.id, pos: homeRun.pos };
 
         // Priority 2 — furthest piece on board that can still advance
         const movable = pieces
-            .filter(p => p.pos !== 0 && p.travelCount < 57 && p.travelCount + diceNum <= 57)
+            .filter(p => canPieceMove(p, diceNum))
             .sort((a, b) => b.travelCount - a.travelCount);
         if (movable.length > 0) return { id: movable[0].id, pos: movable[0].pos };
 
@@ -117,7 +117,7 @@ const Dice: React.FC<DiceProps> = ({ color, rotate, player, data }) => {
         setDiceRolling(false);
 
         const hasMovablePieceOnBoard = data.some((piece) => (
-            piece.pos !== 0 && piece.pos !== 57 && (piece.travelCount + diceNumber) <= 57
+            canPieceMove(piece, diceNumber)
         ));
         const hasPieceInPocket = data.some((piece) => piece.pos === 0);
 
