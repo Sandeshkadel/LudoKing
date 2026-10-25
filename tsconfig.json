@@ -1,0 +1,27 @@
+{
+  "compilerOptions": {
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
+    "strict": true,
+    "skipLibCheck": true,
+    "baseUrl": "./",
+    "allowJs": false,
+    "types": ["react-native", "jest"],
+    "jsx": "react-native",
+    "noImplicitAny": true,
+    "moduleResolution": "Bundler",
+    "target": "ESNext",
+    "lib": ["ESNext"],
+    "paths": {
+      "$assets/*": ["src/assets/*"],
+      "$redux/*": ["src/redux/*"],
+      "$screens/*": ["src/screens/*"],
+      "$constants/*": ["src/constants/*"],
+      "$helpers/*": ["src/helpers/*"],
+      "$components/*": ["src/components/*"],
+      "$hooks/*": ["src/hooks/*"],
+      "$navigation/*": ["src/navigation/*"]
+    },
+    "typeRoots": ["node_modules/@types"]
+  }
+}
