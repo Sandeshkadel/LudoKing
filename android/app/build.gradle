@@ -110,7 +110,11 @@ android {
             // Uses the real release key when LUDO_KEYSTORE_PATH is provided; otherwise
             // falls back to the debug key so local/CI test builds still work. A debug-
             // signed APK must not be distributed publicly (see docs/RELEASING.md).
-            signingConfig (System.getenv("LUDO_KEYSTORE_PATH") || project.hasProperty("LUDO_KEYSTORE_PATH")) ? signingConfigs.release : signingConfigs.debug
+            if (System.getenv("LUDO_KEYSTORE_PATH") || project.hasProperty("LUDO_KEYSTORE_PATH")) {
+                signingConfig signingConfigs.release
+            } else {
+                signingConfig signingConfigs.debug
+            }
             minifyEnabled enableProguardInReleaseBuilds
             proguardFiles getDefaultProguardFile("proguard-android.txt"), "proguard-rules.pro"
         }
