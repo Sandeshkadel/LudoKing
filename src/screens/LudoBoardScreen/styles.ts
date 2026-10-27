@@ -2,40 +2,6 @@ import {DEVICE_HEIGHT, DEVICE_WIDTH} from '$constants/dimensions';
 import {StyleSheet} from 'react-native';
 
 export const styles = StyleSheet.create({
-  assistBanner: {
-    position: 'absolute',
-    top: 62,
-    alignSelf: 'center',
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-    borderRadius: 12,
-    backgroundColor: 'rgba(0,0,0,0.65)',
-    borderWidth: 1,
-    borderColor: '#FFD700',
-  },
-  winnerBorder: {
-    ...StyleSheet.absoluteFillObject,
-    borderWidth: 4,
-    borderColor: '#d5151d',
-    zIndex: 5,
-  },
-  winnerBanner: {
-    backgroundColor: '#d5151d',
-    borderColor: '#ffffff',
-    borderWidth: 2,
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-  },
-  winnerTxt: {
-    color: '#ffffff',
-    fontSize: 12,
-    letterSpacing: 0.5,
-  },
-  assistTxt: {
-    color: '#FFD700',
-    fontWeight: '800',
-    fontSize: 12,
-  },
   iconContainer: {
     position: 'absolute',
     top: 60,

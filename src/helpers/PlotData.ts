@@ -1,5 +1,5 @@
 export const plot1data: Array<number> = [
-  13, 14, 15, 16, 17, 18, 12, 221, 222, 223, 224, 224, 11, 10, 9, 8, 7, 6,
+  13, 14, 15, 16, 17, 18, 12, 221, 222, 223, 224, 225, 11, 10, 9, 8, 7, 6,
 ];
 
 export const plot2data: Array<number> = [

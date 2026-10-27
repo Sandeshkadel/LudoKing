@@ -1,13 +1,38 @@
-import React, {memo} from 'react';
-import {View, Text, TouchableOpacity, StyleSheet, Image} from 'react-native';
+import React, {memo, useRef, useState} from 'react';
+import {
+  Keyboard,
+  View,
+  Text,
+  TextInput,
+  ScrollView,
+  TouchableOpacity,
+  StyleSheet,
+  Image,
+} from 'react-native';
 import Modal from 'react-native-modal';
 import LinearGradient from 'react-native-linear-gradient';
 import {useAppDispatch, useAppSelector} from '$hooks/useAppStore';
-import {setCheatMode, setAiDifficulty} from '$redux/reducers/gameSlice';
+import {
+  setCheatMode,
+  setAiDifficulty,
+  startWinnerSession,
+  setWinnerColour,
+  resumeWinnerMode,
+} from '$redux/reducers/gameSlice';
 import {
   selectCheatMode,
   selectAiDifficulty,
+  selectWinnerSession,
+  selectGameInProgress,
+  selectPlayerCount,
 } from '$redux/reducers/gameSelectors';
+import {
+  MAX_SESSION_GAMES,
+  formatRemaining,
+  isLocked,
+  lockRemainingMs,
+  validateSessionInput,
+} from '../engine/session';
 import {IMAGES} from '$assets/images';
 import {RFValue} from 'react-native-responsive-fontsize';
 
@@ -33,14 +58,55 @@ const SettingsModal: React.FC<Props> = ({visible, onClose}) => {
   const cheat = useAppSelector(selectCheatMode);
   const difficulty = useAppSelector(selectAiDifficulty);
 
+  const session = useAppSelector(selectWinnerSession);
+  const inProgress = useAppSelector(selectGameInProgress);
+  const playerCount = useAppSelector(selectPlayerCount);
+  const [panelOpen, setPanelOpen] = useState(false);
+  const [gamesText, setGamesText] = useState('');
+  const [lossesText, setLossesText] = useState('');
+  const [formColour, setFormColour] = useState(1);
+  const [error, setError] = useState<string | null>(null);
+  const scrollRef = useRef<ScrollView | null>(null);
+  const lossesInputRef = useRef<TextInput | null>(null);
+
+  const now = Date.now();
+  const locked = isLocked(session, now);
+  const selectedFormColour = Math.min(formColour, playerCount);
+
   const enableNormal = () => {
+    setPanelOpen(false);
     dispatch(setCheatMode({enabled: false, favoredPlayer: 0}));
+  };
+
+  const digitsOnly = (text: string) => text.replace(/[^0-9]/g, '').slice(0, 2);
+
+  const startSession = () => {
+    Keyboard.dismiss();
+    const games = gamesText === '' ? NaN : Number(gamesText);
+    const losses = lossesText === '' ? NaN : Number(lossesText);
+    const check = validateSessionInput(
+      games,
+      losses,
+      playerCount,
+      selectedFormColour,
+    );
+    if (!check.ok) {
+      setError(check.error);
+      return;
+    }
+    if (inProgress) {
+      setError('Finish or restart the current game first.');
+      return;
+    }
+    setError(null);
+    dispatch(startWinnerSession({colour: selectedFormColour, games, losses}));
   };
 
   const isWinnerMode = cheat.enabled && cheat.guaranteed === true;
   const isAssistMode = cheat.enabled && !isWinnerMode;
 
   const enableAssist = () => {
+    setPanelOpen(false);
     dispatch(
       setCheatMode({
         enabled: true,
@@ -50,25 +116,87 @@ const SettingsModal: React.FC<Props> = ({visible, onClose}) => {
     );
   };
 
-  const enableWinner = () => {
-    dispatch(
-      setCheatMode({
-        enabled: true,
-        favoredPlayer: cheat.favoredPlayer || 1,
-        guaranteed: true,
-      }),
-    );
-  };
-
-  const selectPlayer = (p: number) => {
+  const selectAssistColour = (p: number) => {
     dispatch(
       setCheatMode({
         enabled: true,
         favoredPlayer: p,
-        guaranteed: isWinnerMode,
+        guaranteed: false,
       }),
     );
   };
+
+  const selectWinnerColour = (p: number) => {
+    dispatch(setWinnerColour(p));
+  };
+
+  const tapWinnerCard = () => {
+    setPanelOpen(true);
+    setError(null);
+    if (session.active && !locked && !isWinnerMode && !inProgress) {
+      dispatch(resumeWinnerMode());
+    }
+  };
+
+  const closeSettings = () => {
+    Keyboard.dismiss();
+    onClose();
+  };
+
+  const renderColours = (
+    selectedColour: number,
+    onSelect: (p: number) => void,
+    disabled: boolean,
+  ) => (
+    <View style={[styles.colorRow, disabled && styles.disabledRow]}>
+      {[1, 2, 3, 4]
+        .filter(p => p <= playerCount)
+        .map(p => {
+          const selected = selectedColour === p;
+          const bg = PLAYER_COLORS[p - 1];
+          return (
+            <TouchableOpacity
+              key={p}
+              disabled={disabled}
+              onPress={() => onSelect(p)}
+              activeOpacity={0.75}
+              accessibilityRole="button"
+              accessibilityLabel={`${COLOR_NAMES[p - 1]} colour`}
+              accessibilityState={{selected, disabled}}
+              style={styles.colorItem}>
+              <View
+                style={[
+                  styles.colorCircleOuter,
+                  selected
+                    ? styles.colorCircleOuterSelected
+                    : styles.colorCircleOuterUnselected,
+                ]}>
+                <View style={[styles.colorCircle, {backgroundColor: bg}]}>
+                  <Image
+                    source={PILE_IMGS[p - 1]}
+                    style={styles.pileImg}
+                    resizeMode="contain"
+                  />
+                  {selected && (
+                    <View style={styles.selectedOverlay}>
+                      <Text style={styles.selectedTick}>✓</Text>
+                    </View>
+                  )}
+                </View>
+              </View>
+              <Text
+                style={[
+                  styles.colorLabel,
+                  selected ? {color: bg} : styles.colorLabelMuted,
+                  selected && styles.colorLabelSelected,
+                ]}>
+                {COLOR_NAMES[p - 1]}
+              </Text>
+            </TouchableOpacity>
+          );
+        })}
+    </View>
+  );
 
   return (
     <Modal
@@ -77,224 +205,293 @@ const SettingsModal: React.FC<Props> = ({visible, onClose}) => {
       animationOut="zoomOut"
       backdropColor="black"
       backdropOpacity={0.88}
-      onBackdropPress={onClose}
-      onBackButtonPress={onClose}
+      onBackdropPress={closeSettings}
+      onBackButtonPress={closeSettings}
+      avoidKeyboard
       style={styles.modal}>
       <LinearGradient
         colors={['#0f0c29', '#302b63', '#24243e']}
         style={styles.container}>
         {/* ── Title ──────────────────────────────────── */}
-        <Text style={styles.title}>⚙️ SETTINGS</Text>
-        <View style={styles.divider} />
+        <ScrollView
+          ref={scrollRef}
+          style={styles.scroll}
+          contentContainerStyle={styles.scrollContent}
+          keyboardShouldPersistTaps="always"
+          keyboardDismissMode="on-drag"
+          showsVerticalScrollIndicator={false}>
+          <Text style={styles.title}>⚙️ SETTINGS</Text>
+          <View style={styles.divider} />
 
-        {/* ── Mode label ─────────────────────────────── */}
-        <Text style={styles.sectionLabel}>SELECT GAME MODE</Text>
+          {/* ── Mode label ─────────────────────────────── */}
+          <Text style={styles.sectionLabel}>SELECT GAME MODE</Text>
 
-        {/* ── Two mode cards ─────────────────────────── */}
-        <View style={styles.modeRow}>
-          {/* Normal Mode */}
-          <TouchableOpacity
-            onPress={enableNormal}
-            activeOpacity={0.8}
-            style={styles.modeCard}>
-            <LinearGradient
-              colors={
-                !cheat.enabled
-                  ? ['#c8860a', '#e8a520', '#f5c842']
-                  : ['#0d1520', '#162030']
-              }
-              style={styles.modeCardInner}>
-              {!cheat.enabled && (
-                <View style={styles.checkBadge}>
-                  <Text style={styles.checkMark}>✓</Text>
-                </View>
-              )}
-              <Text style={styles.modeIcon}>🎲</Text>
-              <Text
-                style={[
-                  styles.modeName,
-                  !cheat.enabled ? styles.modeNameActive : null,
-                ]}>
-                Normal
-              </Text>
-              <Text
-                style={[
-                  styles.modeSub,
-                  !cheat.enabled ? styles.modeSubActive : null,
-                ]}>
-                Fair play (default)
-              </Text>
-            </LinearGradient>
-          </TouchableOpacity>
-
-          {/* Assisted showcase mode: intentionally not fair play */}
-          <TouchableOpacity
-            onPress={enableAssist}
-            activeOpacity={0.8}
-            style={styles.modeCard}>
-            <LinearGradient
-              colors={
-                isAssistMode
-                  ? ['#c8860a', '#e8a520', '#f5c842']
-                  : ['#0d1520', '#162030']
-              }
-              style={styles.modeCardInner}>
-              {isAssistMode && (
-                <View style={styles.checkBadge}>
-                  <Text style={styles.checkMark}>✓</Text>
-                </View>
-              )}
-              <Text style={styles.modeIcon}>🏆</Text>
-              <Text
-                style={[
-                  styles.modeName,
-                  isAssistMode ? styles.modeNameActive : null,
-                ]}>
-                Assist
-              </Text>
-              <Text
-                style={[
-                  styles.modeSub,
-                  isAssistMode ? styles.modeSubActive : null,
-                ]}>
-                Open handicap
-              </Text>
-            </LinearGradient>
-          </TouchableOpacity>
-
-          {/* Winner Mode: selected colour is set to win, labelled on screen */}
-          <TouchableOpacity
-            onPress={enableWinner}
-            activeOpacity={0.8}
-            style={styles.modeCard}>
-            <LinearGradient
-              colors={
-                isWinnerMode
-                  ? ['#c8860a', '#e8a520', '#f5c842']
-                  : ['#0d1520', '#162030']
-              }
-              style={styles.modeCardInner}>
-              {isWinnerMode && (
-                <View style={styles.checkBadge}>
-                  <Text style={styles.checkMark}>✓</Text>
-                </View>
-              )}
-              <Text style={styles.modeIcon}>👑</Text>
-              <Text
-                style={[
-                  styles.modeName,
-                  isWinnerMode ? styles.modeNameActive : null,
-                ]}>
-                Winner
-              </Text>
-              <Text
-                style={[
-                  styles.modeSub,
-                  isWinnerMode ? styles.modeSubActive : null,
-                ]}>
-                Set to win
-              </Text>
-            </LinearGradient>
-          </TouchableOpacity>
-        </View>
-
-        {/* ── Computer difficulty ─────────────────────── */}
-        <View style={styles.divider} />
-        <Text style={styles.sectionLabel}>COMPUTER DIFFICULTY</Text>
-        <View style={styles.colorRow}>
-          {(['easy', 'normal', 'hard'] as const).map(level => (
+          {/* ── Two mode cards ─────────────────────────── */}
+          <View style={styles.modeRow}>
+            {/* Normal Mode */}
             <TouchableOpacity
-              key={level}
-              onPress={() => dispatch(setAiDifficulty(level))}
+              onPress={enableNormal}
               activeOpacity={0.8}
-              accessibilityRole="button"
-              accessibilityLabel={`Computer difficulty ${level}`}
-              accessibilityState={{selected: difficulty === level}}
-              style={styles.colorItem}>
-              <Text
-                style={[
-                  styles.colorLabel,
-                  difficulty === level && styles.colorLabelSelected,
-                  difficulty === level
-                    ? styles.colorLabelActive
-                    : styles.colorLabelMuted,
-                ]}>
-                {level.toUpperCase()}
-              </Text>
+              style={styles.modeCard}>
+              <LinearGradient
+                colors={
+                  !cheat.enabled
+                    ? ['#c8860a', '#e8a520', '#f5c842']
+                    : ['#0d1520', '#162030']
+                }
+                style={styles.modeCardInner}>
+                {!cheat.enabled && (
+                  <View style={styles.checkBadge}>
+                    <Text style={styles.checkMark}>✓</Text>
+                  </View>
+                )}
+                <Text style={styles.modeIcon}>🎲</Text>
+                <Text
+                  style={[
+                    styles.modeName,
+                    !cheat.enabled ? styles.modeNameActive : null,
+                  ]}>
+                  Normal
+                </Text>
+                <Text
+                  style={[
+                    styles.modeSub,
+                    !cheat.enabled ? styles.modeSubActive : null,
+                  ]}>
+                  Fair play (default)
+                </Text>
+              </LinearGradient>
             </TouchableOpacity>
-          ))}
-        </View>
 
-        {/* ── Favored color picker (Assist mode only) ──── */}
-        {cheat.enabled && (
-          <>
-            <View style={styles.divider} />
-            <Text style={styles.sectionLabel}>
-              {isWinnerMode ? 'WINNER COLOR' : 'FAVORED COLOR'} (SHOWN TO ALL
-              PLAYERS)
-            </Text>
+            {/* Assisted showcase mode: intentionally not fair play */}
+            <TouchableOpacity
+              onPress={enableAssist}
+              activeOpacity={0.8}
+              style={styles.modeCard}>
+              <LinearGradient
+                colors={
+                  isAssistMode
+                    ? ['#c8860a', '#e8a520', '#f5c842']
+                    : ['#0d1520', '#162030']
+                }
+                style={styles.modeCardInner}>
+                {isAssistMode && (
+                  <View style={styles.checkBadge}>
+                    <Text style={styles.checkMark}>✓</Text>
+                  </View>
+                )}
+                <Text style={styles.modeIcon}>🏆</Text>
+                <Text
+                  style={[
+                    styles.modeName,
+                    isAssistMode ? styles.modeNameActive : null,
+                  ]}>
+                  Assist
+                </Text>
+                <Text
+                  style={[
+                    styles.modeSub,
+                    isAssistMode ? styles.modeSubActive : null,
+                  ]}>
+                  Open handicap
+                </Text>
+              </LinearGradient>
+            </TouchableOpacity>
 
-            <View style={styles.colorRow}>
-              {[1, 2, 3, 4].map(p => {
-                const selected = cheat.favoredPlayer === p;
-                const bg = PLAYER_COLORS[p - 1];
-                return (
-                  <TouchableOpacity
-                    key={p}
-                    onPress={() => selectPlayer(p)}
-                    activeOpacity={0.75}
-                    style={styles.colorItem}>
-                    {/* Outer ring glows gold when selected */}
-                    <View
-                      style={[
-                        styles.colorCircleOuter,
-                        selected
-                          ? styles.colorCircleOuterSelected
-                          : styles.colorCircleOuterUnselected,
-                      ]}>
-                      {/* Solid colour fill */}
-                      <View style={[styles.colorCircle, {backgroundColor: bg}]}>
-                        <Image
-                          source={PILE_IMGS[p - 1]}
-                          style={styles.pileImg}
-                          resizeMode="contain"
-                        />
-                        {selected && (
-                          <View style={styles.selectedOverlay}>
-                            <Text style={styles.selectedTick}>✓</Text>
-                          </View>
-                        )}
-                      </View>
+            {/* Winner Mode: selected colour is set to win, labelled on screen */}
+            <TouchableOpacity
+              onPress={tapWinnerCard}
+              activeOpacity={0.8}
+              style={styles.modeCard}>
+              <LinearGradient
+                colors={
+                  isWinnerMode
+                    ? ['#c8860a', '#e8a520', '#f5c842']
+                    : ['#0d1520', '#162030']
+                }
+                style={styles.modeCardInner}>
+                {isWinnerMode && (
+                  <View style={styles.checkBadge}>
+                    <Text style={styles.checkMark}>✓</Text>
+                  </View>
+                )}
+                <Text style={styles.modeIcon}>👑</Text>
+                <Text
+                  style={[
+                    styles.modeName,
+                    isWinnerMode ? styles.modeNameActive : null,
+                  ]}>
+                  Winner
+                </Text>
+                <Text
+                  style={[
+                    styles.modeSub,
+                    isWinnerMode ? styles.modeSubActive : null,
+                  ]}>
+                  {locked ? 'Locked' : 'Game series'}
+                </Text>
+              </LinearGradient>
+            </TouchableOpacity>
+          </View>
+
+          {/* ── Computer difficulty ─────────────────────── */}
+          <View style={styles.divider} />
+          <Text style={styles.sectionLabel}>COMPUTER DIFFICULTY</Text>
+          <View style={styles.colorRow}>
+            {(['easy', 'normal', 'hard'] as const).map(level => (
+              <TouchableOpacity
+                key={level}
+                onPress={() => dispatch(setAiDifficulty(level))}
+                activeOpacity={0.8}
+                accessibilityRole="button"
+                accessibilityLabel={`Computer difficulty ${level}`}
+                accessibilityState={{selected: difficulty === level}}
+                style={styles.colorItem}>
+                <Text
+                  style={[
+                    styles.colorLabel,
+                    difficulty === level && styles.colorLabelSelected,
+                    difficulty === level
+                      ? styles.colorLabelActive
+                      : styles.colorLabelMuted,
+                  ]}>
+                  {level.toUpperCase()}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+
+          {/* ── Assist colour picker (open handicap) ───── */}
+          {cheat.enabled && !isWinnerMode && (
+            <>
+              <View style={styles.divider} />
+              <Text style={styles.sectionLabel}>FAVORED COLOR</Text>
+              {renderColours(cheat.favoredPlayer, selectAssistColour, false)}
+              <View style={styles.hintBox}>
+                <Text style={styles.hintText}>
+                  ⚠️ Assist is an open handicap, not fair play: the favored
+                  color rolls weighted dice and its moves are chosen
+                  automatically. The mode and color are configured in Settings
+                  and are not displayed during play. All other colors roll fair
+                  dice.
+                </Text>
+              </View>
+            </>
+          )}
+
+          {/* ── Winner Mode game series ───────────────── */}
+          {(panelOpen || isWinnerMode) && (
+            <>
+              <View style={styles.divider} />
+              <Text style={styles.sectionLabel}>WINNER MODE · GAME SERIES</Text>
+
+              {locked ? (
+                <View style={styles.hintBox}>
+                  <Text style={styles.hintText}>
+                    🔒 Winner Mode is locked for{' '}
+                    {formatRemaining(lockRemainingMs(session, now))}. Your last
+                    series is finished, so games are normal until then.
+                  </Text>
+                </View>
+              ) : !session.active ? (
+                <>
+                  <View style={styles.inputRow}>
+                    <View style={styles.inputCol}>
+                      <Text style={styles.inputLabel}>Games to play today</Text>
+                      <TextInput
+                        style={styles.input}
+                        value={gamesText}
+                        onChangeText={t => setGamesText(digitsOnly(t))}
+                        keyboardType="number-pad"
+                        returnKeyType="next"
+                        onSubmitEditing={() => lossesInputRef.current?.focus()}
+                        onFocus={() =>
+                          scrollRef.current?.scrollToEnd({animated: true})
+                        }
+                        placeholder="e.g. 7"
+                        placeholderTextColor="#55657a"
+                        maxLength={2}
+                        accessibilityLabel="Number of games to play today"
+                      />
                     </View>
-                    {/* Colour name — always the standard colour label */}
-                    <Text
-                      style={[
-                        styles.colorLabel,
-                        selected ? {color: bg} : styles.colorLabelMuted,
-                        selected && styles.colorLabelSelected,
-                      ]}>
-                      {COLOR_NAMES[p - 1]}
-                    </Text>
+                    <View style={styles.inputCol}>
+                      <Text style={styles.inputLabel}>Games to lose</Text>
+                      <TextInput
+                        ref={lossesInputRef}
+                        style={styles.input}
+                        value={lossesText}
+                        onChangeText={t => setLossesText(digitsOnly(t))}
+                        keyboardType="number-pad"
+                        returnKeyType="done"
+                        onSubmitEditing={Keyboard.dismiss}
+                        onFocus={() =>
+                          scrollRef.current?.scrollToEnd({animated: true})
+                        }
+                        placeholder="e.g. 3"
+                        placeholderTextColor="#55657a"
+                        maxLength={2}
+                        accessibilityLabel="Number of games to lose"
+                      />
+                    </View>
+                  </View>
+                  <Text style={styles.sectionLabel}>WINNER COLOR</Text>
+                  {renderColours(selectedFormColour, setFormColour, false)}
+                  {error && <Text style={styles.errorText}>{error}</Text>}
+                  <TouchableOpacity onPress={startSession} activeOpacity={0.8}>
+                    <LinearGradient
+                      colors={['#c8860a', '#e8a520', '#f5c842']}
+                      style={styles.startBtn}>
+                      <Text style={styles.startBtnTxt}>START SERIES</Text>
+                    </LinearGradient>
                   </TouchableOpacity>
-                );
-              })}
-            </View>
+                  <View style={styles.hintBox}>
+                    <Text style={styles.hintText}>
+                      Both numbers are required (1–{MAX_SESSION_GAMES} games;
+                      losses cannot exceed games). The losing games are placed
+                      at random among your games. After the last game Winner
+                      Mode switches off and locks for 10 hours.
+                    </Text>
+                  </View>
+                </>
+              ) : (
+                <>
+                  <Text style={styles.statusText}>
+                    Game{' '}
+                    {Math.min(session.gamesPlayed + 1, session.gamesPlanned)} of{' '}
+                    {session.gamesPlanned} · {session.gamesPlayed} finished
+                  </Text>
+                  <Text style={styles.sectionLabel}>
+                    WINNER COLOR {inProgress ? '(CHANGE BETWEEN GAMES)' : ''}
+                  </Text>
+                  {renderColours(
+                    session.colour,
+                    selectWinnerColour,
+                    inProgress,
+                  )}
+                  {!cheat.enabled && (
+                    <Text style={styles.errorText}>
+                      Paused: games are normal and not counted. Tap Winner to
+                      resume.
+                    </Text>
+                  )}
+                  <View style={styles.hintBox}>
+                    <Text style={styles.hintText}>
+                      👑 Winner Mode and its selected color are configured in
+                      Settings. No mode banner or border is shown on the board
+                      during play. The color can be changed only before a game
+                      starts.
+                    </Text>
+                  </View>
+                </>
+              )}
+            </>
+          )}
 
-            {/* Be transparent about the mode's effect */}
-            <View style={styles.hintBox}>
-              <Text style={styles.hintText}>
-                {isWinnerMode
-                  ? '👑 Winner Mode: the selected color is set to win. A red border and a "WINNER MODE ON" label naming the winner stay on the board for the whole match so everyone can see it. The game controls dice for every color: the dice of the winner color are steered, and other colors cannot roll a number that brings a piece home until the winner color has at least as many pieces home.'
-                  : '⚠️ Assist is an open handicap, not fair play: the favored color rolls weighted dice and its moves are chosen automatically. A banner on the board tells every player which color is assisted. All other colors roll fair dice.'}
-              </Text>
-            </View>
-          </>
-        )}
-
-        <View style={styles.divider} />
+          <View style={styles.divider} />
+        </ScrollView>
 
         {/* ── Done button ─────────────────────────────── */}
-        <TouchableOpacity onPress={onClose} activeOpacity={0.8}>
+        <TouchableOpacity onPress={closeSettings} activeOpacity={0.8}>
           <LinearGradient
             colors={['#2a6fd4', '#1a57b0', '#0f3d8a']}
             style={styles.doneBtn}>
@@ -482,6 +679,57 @@ const styles = StyleSheet.create({
     textShadowColor: 'rgba(0,0,0,0.4)',
     textShadowOffset: {width: 0, height: 1},
     textShadowRadius: 2,
+  },
+
+  scroll: {width: '100%', maxHeight: '88%'},
+  scrollContent: {alignItems: 'center', paddingBottom: 4},
+  disabledRow: {opacity: 0.4},
+  inputRow: {flexDirection: 'row', gap: 12, width: '100%', marginBottom: 10},
+  inputCol: {flex: 1},
+  inputLabel: {
+    color: '#b8c4d8',
+    fontSize: RFValue(10),
+    fontWeight: '700',
+    marginBottom: 6,
+    textAlign: 'center',
+  },
+  input: {
+    backgroundColor: 'rgba(255,255,255,0.08)',
+    borderWidth: 1.5,
+    borderColor: 'rgba(255,215,0,0.45)',
+    borderRadius: 10,
+    color: '#fff',
+    fontSize: RFValue(16),
+    fontWeight: '800',
+    textAlign: 'center',
+    paddingVertical: 8,
+    minHeight: 48,
+  },
+  errorText: {
+    color: '#ff8a80',
+    fontSize: RFValue(10),
+    fontWeight: '700',
+    textAlign: 'center',
+    marginVertical: 6,
+  },
+  statusText: {
+    color: '#fff',
+    fontSize: RFValue(12),
+    fontWeight: '800',
+    marginBottom: 10,
+  },
+  startBtn: {
+    borderRadius: 22,
+    paddingVertical: 10,
+    paddingHorizontal: 36,
+    marginTop: 6,
+    marginBottom: 6,
+  },
+  startBtnTxt: {
+    color: '#fff',
+    fontSize: RFValue(13),
+    fontWeight: '900',
+    letterSpacing: 1.2,
   },
 
   // Hint

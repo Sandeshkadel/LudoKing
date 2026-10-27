@@ -19,8 +19,6 @@ import {
   selectPlayer4,
   selectWinner,
   selectPlayerNames,
-  selectPlayerCount,
-  selectCheatMode,
 } from '$redux/reducers/gameSelectors';
 import {useIsFocused} from '@react-navigation/native';
 import MenuModal from '$components/MenuModal';
@@ -34,22 +32,6 @@ const LudoBoardScreen = () => {
   const isDiceTouched = useAppSelector(selectDiceTouch);
   const winner = useAppSelector(selectWinner);
   const playerNames = useAppSelector(selectPlayerNames);
-  const playerCount = useAppSelector(selectPlayerCount);
-  const assist = useAppSelector(selectCheatMode);
-  const COLOR_NAMES = ['Red', 'Green', 'Yellow', 'Blue'];
-  const favoredName =
-    assist.favoredPlayer >= 1 && assist.favoredPlayer <= playerCount
-      ? `${COLOR_NAMES[assist.favoredPlayer - 1]} (${
-          playerNames[assist.favoredPlayer - 1] ?? ''
-        })`
-      : null;
-  const isWinnerMode = assist.enabled && assist.guaranteed === true;
-  const assistLabel =
-    assist.enabled && favoredName
-      ? isWinnerMode
-        ? `WINNER MODE ON — ${favoredName} will win`
-        : `Assist: ${favoredName}`
-      : null;
 
   // Colour palette aligned with board pocket mapping
   // P1=Red  P2=Green  P3=Yellow  P4=Blue
@@ -95,30 +77,6 @@ const LudoBoardScreen = () => {
 
   return (
     <Wrapper>
-      {isWinnerMode && (
-        <View
-          pointerEvents="none"
-          style={styles.winnerBorder}
-          accessibilityElementsHidden
-          importantForAccessibility="no-hide-descendants"
-        />
-      )}
-      {assistLabel && (
-        <View
-          style={[styles.assistBanner, isWinnerMode && styles.winnerBanner]}
-          accessible
-          accessibilityRole="text"
-          accessibilityLabel={
-            isWinnerMode
-              ? `${assistLabel}. The result of this match is set in advance.`
-              : `${assistLabel}. This color has an open handicap.`
-          }>
-          <Text style={[styles.assistTxt, isWinnerMode && styles.winnerTxt]}>
-            {assistLabel}
-          </Text>
-        </View>
-      )}
-
       <TouchableOpacity
         style={styles.iconContainer}
         accessibilityRole="button"

@@ -17,8 +17,8 @@ React Native 0.73 · TypeScript · Redux Toolkit
 - Classic Ludo rules for **2, 3 or 4 players** with custom player names
 - **Computer opponents** on any seat (Easy / Normal / Hard) — see [How the AI works](#how-the-ai-works)
 - **Fair dice by default**: every player rolls a uniform 1–6
-- **Assist mode** (optional, always disclosed): a visible *"Assist: Red"* banner tells every player that one colour has an open handicap
-- **Winner Mode** (optional, always disclosed): pick a colour in Settings and it is set to win; a red border and a **"WINNER MODE ON — Red will win"** label stay on the board for the whole match
+- **Assist mode** (optional): configure a favoured colour in Settings; the chosen mode and colour are not displayed on the board during play
+- **Winner Mode** (optional): configure a game series and colour in Settings; no mode banner or red border is displayed on the board during play
 - Animated dice, captures, safe/star squares, victory lanes, fireworks and a winner screen
 - Sound effects, restart that keeps your setup, accessible labels on interactive controls
 
@@ -29,10 +29,10 @@ Note: the name "Ludo King" is also used by a commercial game, so use a different
 | Mode | Dice | Who knows |
 |------|------|-----------|
 | **Normal** (default) | Uniform for all players | — |
-| **Assist** | Favoured colour rolls weighted dice (8/10/14/18/22/28 % for faces 1–6) and its moves are chosen automatically; every other colour is uniform | A banner on the board names the assisted colour for the whole match |
-| **Winner Mode** | The game controls the dice. The selected colour's dice are steered toward faces it needs (varied faces, never three sixes in a row) and it moves its own pieces like any seat. Other colours roll uniform dice **minus any face that would bring one of their pieces home** until the winner colour has at least as many pieces home, so they can never finish ahead of it | A red border and a red **WINNER MODE ON — Red will win** label name the winning colour for the whole match |
+| **Assist** | Favoured colour rolls weighted dice (8/10/14/18/22/28 % for faces 1–6) and its moves are chosen automatically; every other colour is uniform | Configured in Settings; no in-game indicator |
+| **Winner Mode** | The game controls the dice. The selected colour's dice are steered toward faces it needs (varied faces, never three sixes in a row) and it moves its own pieces like any seat. Other colours roll uniform dice **minus any face that would bring one of their pieces home** until the winner colour has at least as many pieces home, so they can never finish ahead of it | Configured in Settings; no in-game indicator |
 
-There is no hidden mode: whenever a colour is favoured or set to win, the label is on screen. The computer opponent **never touches the dice** — it only chooses which piece to move, and it rolls the same uniform dice as a human.
+Assist and Winner Mode settings do not appear on the board during play. Make sure everyone playing knows which mode is selected before starting. The computer opponent **never touches the dice** — it only chooses which piece to move, and it rolls the same uniform dice as a human.
 
 ## How the AI works
 

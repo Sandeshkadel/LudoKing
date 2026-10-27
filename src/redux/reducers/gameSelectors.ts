@@ -1,4 +1,5 @@
 import {RootState} from '$redux/store';
+import {emptySession} from '../../engine/session';
 
 export const selectCurrentPosition = (state: RootState) =>
   state.game.currentPosition;
@@ -30,3 +31,13 @@ export const selectAiPlayers = (state: RootState): number[] =>
   state.game.aiPlayers ?? [];
 export const selectAiDifficulty = (state: RootState) =>
   state.game.aiDifficulty ?? 'hard';
+export const selectWinnerSession = (state: RootState) =>
+  state.game.winnerSession ?? emptySession();
+/** True once any piece has left its pocket (a game is under way). */
+export const selectGameInProgress = (state: RootState): boolean =>
+  [
+    state.game.player1,
+    state.game.player2,
+    state.game.player3,
+    state.game.player4,
+  ].some(list => list.some(piece => piece.pos !== 0));

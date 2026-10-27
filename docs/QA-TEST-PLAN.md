@@ -12,7 +12,7 @@ Verified in a local environment (not CI) on 2026-10-25:
 
 Not yet verified: Gradle `assembleRelease`, installation on an emulator/physical device, end-to-end full games on a device, iOS build, and a published APK. GitHub Actions may be blocked by account billing; a blocked workflow is not a code failure and no APK exists until a run succeeds.
 
-Dice policy: Normal mode is uniform for every player. Assist and Winner Mode are open: an on-board banner (and a red border for Winner Mode) names the favoured colour for the whole match. In Winner Mode the game controls all dice: the selected colour's dice are steered, and other colours cannot roll a face that brings a piece home until the winner colour has at least as many pieces home. The computer opponent only chooses moves and never alters dice.
+Dice policy: Normal mode is uniform for every player. Assist and Winner Mode are configured in Settings and do not display a mode banner or border during gameplay. Make sure all players know which mode is selected before play. In Winner Mode the game controls all dice: the selected colour's dice are steered, and other colours cannot roll a face that brings a piece home until the winner colour has at least as many pieces home. The computer opponent only chooses moves and never alters dice.
 
 ## Commands
 

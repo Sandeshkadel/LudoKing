@@ -4,7 +4,7 @@
  * Assist seat (weighted dice from rollWeightedDice).
  */
 import {Difficulty, chooseMove} from './ai';
-import {rollGatedDice, rollWinnerDice} from './scripted';
+import {rollGatedDice, rollLosingDice, rollWinnerDice} from './scripted';
 import {
   GameModel,
   applyMove,
@@ -28,6 +28,8 @@ export type SimConfig = {
   assistSeat?: number;
   /** Openly labelled Winner Mode seat (1-4); its dice are steered and its moves use the Hard AI. */
   winnerSeat?: number;
+  /** Winner Mode seat scheduled to LOSE this game (cannot roll the game-winning face). */
+  loseSeat?: number;
   /** How the Winner Mode seat picks moves: 'hard' (default) or 'random' (careless human play). */
   winnerPolicy?: Policy;
   maxTurns?: number;
@@ -99,6 +101,8 @@ export function runGame(config: SimConfig, seed: number): GameStats {
     if (config.winnerSeat === player) {
       dice = rollWinnerDice(model, player, random, sixStreak);
       sixStreak = dice === 6 ? sixStreak + 1 : 0;
+    } else if (config.loseSeat === player) {
+      dice = rollLosingDice(model, player, random);
     } else if (config.winnerSeat) {
       // Opponents roll uniform dice minus faces that would bring a piece home ahead of the winner.
       dice = rollGatedDice(model, player, config.winnerSeat, random);

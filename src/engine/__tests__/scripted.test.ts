@@ -128,3 +128,30 @@ describe('Winner Mode dice', () => {
     });
   });
 });
+
+describe('planned-loss dice', () => {
+  const {blockedFacesForLoser, rollLosingDice} = require('../scripted');
+
+  it('blocks only the face that would bring the last piece home', () => {
+    const model = createModel(4);
+    expect(blockedFacesForLoser(model, 1)).toEqual([]);
+    model.players[0].forEach((p: any, i: number) => {
+      p.pos = 115;
+      p.travelCount = i < 3 ? 57 : 54;
+    });
+    expect(blockedFacesForLoser(model, 1)).toEqual([3]);
+    for (let seed = 1; seed <= 300; seed += 1) {
+      expect(rollLosingDice(model, 1, seededRandom(seed))).not.toBe(3);
+    }
+  });
+
+  it('rolls all six faces normally when nothing is blocked', () => {
+    const model = createModel(4);
+    const seen = new Set<number>();
+    const rnd = seededRandom(4);
+    for (let i = 0; i < 200; i += 1) {
+      seen.add(rollLosingDice(model, 1, rnd));
+    }
+    expect(seen.size).toBe(6);
+  });
+});

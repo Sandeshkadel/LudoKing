@@ -1,4 +1,4 @@
-import {runBatch, runGame, seededRandom} from '../simulator';
+import {Policy, runBatch, runGame, seededRandom} from '../simulator';
 
 describe('deterministic full-game simulation', () => {
   it('is reproducible for a given seed', () => {
@@ -73,4 +73,24 @@ describe('deterministic full-game simulation', () => {
       expect(v).toBeLessThan(1);
     }
   });
+});
+
+describe('planned-loss games (Winner Mode series)', () => {
+  it.each([2, 3, 4])(
+    '%i players: the losing seat never wins and games never stall',
+    n => {
+      for (let seat = 1; seat <= n; seat += 1) {
+        const policies = Array(n).fill('hard') as Policy[];
+        const summary = runBatch(
+          {playerCount: n, policies, loseSeat: seat},
+          60,
+          500 + seat,
+        );
+        expect(summary.deadlocks).toBe(0);
+        expect(summary.invariantFailures).toBe(0);
+        expect(summary.winsBySeat[seat - 1]).toBe(0);
+        expect(summary.completed).toBe(60);
+      }
+    },
+  );
 });

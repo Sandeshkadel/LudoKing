@@ -1,10 +1,9 @@
 /**
  * Winner Mode dice.
  *
- * Winner Mode is an openly labelled, host-selected result: the app shows a red
- * "WINNER MODE ON" label for the whole match. Only the selected colour's dice are
- * steered; every other seat keeps rolling uniform dice. The steering is shaped to
- * look like normal play (varied faces, no long runs of sixes).
+ * Winner Mode is a host-selected result configured in Settings. Only the selected
+ * colour's dice are steered; every other seat keeps rolling uniform dice. The
+ * steering is shaped to look like normal play (varied faces, no long runs of sixes).
  */
 import {scoreMove} from './ai';
 import {GameModel, legalMoves} from './gameEngine';
@@ -121,4 +120,33 @@ export function rollGatedDice(
   const allowed = [1, 2, 3, 4, 5, 6].filter(f => !blocked.includes(f));
   const pool = allowed.length > 0 ? allowed : [1, 2, 3, 4, 5, 6];
   return pool[Math.floor(random() * pool.length)];
+}
+
+// ─────────────────── Winner Mode: planned LOSS for the selected seat ───────────────────
+
+/**
+ * Faces the selected seat may not roll in a game it is scheduled to lose: only the
+ * face that would bring its LAST piece home (i.e. win the game). Everything else
+ * is a normal, fair roll, so the seat plays a natural-looking game and simply
+ * cannot finish it.
+ */
+export function blockedFacesForLoser(model: GameModel, seat: number): number[] {
+  const pieces = model.players[seat - 1];
+  const notHome = pieces.filter(p => p.travelCount < HOME_TRAVEL_COUNT);
+  if (notHome.length !== 1) {
+    return [];
+  }
+  const need = HOME_TRAVEL_COUNT - notHome[0].travelCount;
+  return notHome[0].pos !== 0 && need >= 1 && need <= 6 ? [need] : [];
+}
+
+/** Fair dice for the seat scheduled to lose, minus the game-winning face. */
+export function rollLosingDice(
+  model: GameModel,
+  seat: number,
+  random: () => number = Math.random,
+): number {
+  const blocked = blockedFacesForLoser(model, seat);
+  const allowed = [1, 2, 3, 4, 5, 6].filter(f => !blocked.includes(f));
+  return allowed[Math.floor(random() * allowed.length)];
 }

@@ -10,6 +10,7 @@ import {
   setAiPlayers,
   setCheatMode,
   setPlayerCount,
+  startWinnerSession,
 } from '../gameSlice';
 import {handleForwardThunk} from '../gameActions';
 import {playTurnThunk} from '../turnThunk';
@@ -32,10 +33,14 @@ async function playFullGame({players, ai = [], cheat, seed}: Setup) {
   const random = seededRandom(seed);
   store.dispatch(setPlayerCount(players));
   store.dispatch(setAiPlayers(ai));
-  if (cheat) {
+  store.dispatch(resetGame());
+  if (cheat?.guaranteed) {
+    store.dispatch(
+      startWinnerSession({colour: cheat.favoredPlayer, games: 1, losses: 0}),
+    );
+  } else if (cheat) {
     store.dispatch(setCheatMode(cheat));
   }
-  store.dispatch(resetGame());
 
   const turnsBySeat: Record<number, number> = {};
   const noDelay = async () => undefined;
@@ -169,10 +174,8 @@ describe('real-store full games', () => {
     const store = makeStore();
     const random = seededRandom(5);
     store.dispatch(setPlayerCount(4));
-    store.dispatch(
-      setCheatMode({enabled: true, favoredPlayer: 2, guaranteed: true}),
-    );
     store.dispatch(resetGame());
+    store.dispatch(startWinnerSession({colour: 2, games: 1, losses: 0}));
     const homes = (key: 'player1' | 'player2' | 'player3' | 'player4') =>
       store.getState().game[key].filter(p => p.travelCount === 57).length;
     let guard = 0;

@@ -11,6 +11,8 @@ import Pile from './Pile';
 import {DEVICE_HEIGHT, DEVICE_WIDTH} from '$constants/dimensions';
 
 const SIZE = 300;
+/** Gap between pieces that have reached home (4 pieces must all stay visible). */
+const HOME_SPACING = 12;
 
 interface FourTriangleProps {
   player1: PLAYER_PIECE[];
@@ -78,7 +80,12 @@ const PlayerPieces: React.FC<PlayerPiecesProps> = memo(
             key={piece.id}
             style={[
               styles.pieceContainer,
-              {transform: [{scale: 0.5}, {[translate]: 14 * idx} as any]},
+              {
+                transform: [
+                  {scale: 0.5},
+                  {[translate]: HOME_SPACING * idx} as any,
+                ],
+              },
             ]}>
             <Pile
               cell={true}

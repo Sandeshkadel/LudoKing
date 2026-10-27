@@ -31,6 +31,8 @@ declare type CHEAT_MODE = {
   favoredPlayer: number; // 1-4, 0 = none
   /** true = openly labelled Winner Mode; false/undefined = Assist handicap. */
   guaranteed?: boolean;
+  /** Planned result of the CURRENT game for the favoured seat (Winner Mode only). */
+  result?: 'win' | 'lose';
 };
 
 declare type INITIAL_STATE = {
@@ -46,6 +48,11 @@ declare type INITIAL_STATE = {
   aiDifficulty: 'easy' | 'normal' | 'hard';
   /** Consecutive sixes rolled by the Winner Mode seat (keeps rolls natural-looking). */
   sixStreak: number;
+  /** Winner Mode session: games to play, games to lose, 10-hour lock. */
+  winnerSession: import('./src/engine/session').WinnerSession;
+  /** Per-game dice seed and number of rolls made in this game. */
+  diceSeed: number;
+  rollCount: number;
   chancePlayer: number;
   diceNo: number;
   isDiceRolled: boolean;

@@ -1,3 +1,5 @@
+import {emptySession} from '../engine/session';
+
 const player1InitialState = [
   {id: 'A1', pos: 0, travelCount: 0},
   {id: 'A2', pos: 0, travelCount: 0},
@@ -37,6 +39,9 @@ export const initialState: INITIAL_STATE = {
   aiPlayers: [],
   aiDifficulty: 'hard',
   sixStreak: 0,
+  winnerSession: emptySession(),
+  diceSeed: 0,
+  rollCount: 0,
   chancePlayer: 1,
   diceNo: 1,
   isDiceRolled: false,

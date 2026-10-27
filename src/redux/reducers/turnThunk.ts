@@ -15,12 +15,18 @@ import {playerKey} from '$helpers/playerKeys';
 import {ApplicationDispatch, RootState} from '$redux/store';
 import {chooseMove} from '../../engine/ai';
 import {GameModel} from '../../engine/gameEngine';
-import {rollGatedDice, rollWinnerDice} from '../../engine/scripted';
+import {
+  rollGatedDice,
+  rollLosingDice,
+  rollWinnerDice,
+} from '../../engine/scripted';
+import {rollRandom} from '$helpers/diceRng';
 import {handleForwardThunk} from './gameActions';
 import {
   disableTouch,
   enableCellSelection,
   enablePileSelection,
+  advanceRoll,
   setSixStreak,
   updateDiceNumber,
   updatePlayerChance,
@@ -46,9 +52,11 @@ export const toModel = (game: RootState['game']): GameModel => ({
 export const playTurnThunk =
   (player: number, options: TurnOptions = {}) =>
   async (dispatch: ApplicationDispatch, getState: () => RootState) => {
-    const random = options.random ?? Math.random;
     const wait = options.delayFn ?? defaultDelay;
     const start = getState().game;
+    // Every game has its own seed; every roll its own stream (no repeated sequences).
+    const random =
+      options.random ?? rollRandom(start.diceSeed, start.rollCount ?? 0);
 
     // Only the seat whose turn it is can roll, and never once the game is over.
     if (
@@ -67,6 +75,8 @@ export const playTurnThunk =
       const streak = start.sixStreak ?? 0;
       dice = rollWinnerDice(toModel(start), player, random, streak);
       dispatch(setSixStreak(dice === 6 ? streak + 1 : 0));
+    } else if (role.losing) {
+      dice = rollLosingDice(toModel(start), player, random);
     } else if (role.gated) {
       dice = rollGatedDice(
         toModel(start),
@@ -80,6 +90,7 @@ export const playTurnThunk =
       dice = rollFairDice(random);
     }
 
+    dispatch(advanceRoll());
     playSound('dice_roll');
     options.onRolling?.(true);
     await wait(800);
